@@ -14,6 +14,31 @@ router.post('/', mutateLimiter, async (req, res) => {
 });
 
 router.put('/:id', mutateLimiter, async (req, res) => {
+  const db = getDb();
+  const existing = await db.get('SELECT * FROM services WHERE id = ?', [req.params.id]);
+  if (!existing) return res.status(404).json({ message: 'Service not found' });
+
+  const payload = {
+    title: req.body.title ?? existing.title,
+    description: req.body.description ?? existing.description,
+    details: req.body.details ?? existing.details,
+    pricing: req.body.pricing ?? existing.pricing,
+  };
+  const { errors, sanitized } = validateServiceInput(payload);
+  if (Object.keys(errors).length) return res.status(400).json({ errors });
+
+  await db.run(
+    'UPDATE services SET title=?,description=?,details=?,pricing=?,updatedAt=? WHERE id=?',
+    [sanitized.title, sanitized.description, sanitized.details, sanitized.pricing, new Date().toISOString(), req.params.id]
+  );
+  const updated = await db.get('SELECT * FROM services WHERE id = ?', [req.params.id]);
+  return res.json({ data: updated });
+});
+
+router.delete('/:id', mutateLimiter, async (req, res) => {
+  const db = getDb();
+  const result = await db.run('DELETE FROM services WHERE id = ?', [req.params.id]);
+  if (!result.changes) return res.status(404).json({ message: 'Service not found' });
   const service = await Service.findById(req.params.id);
   if (!service) return res.status(404).json({ message: 'Service not found' });
 

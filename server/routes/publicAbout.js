@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDb } from '../db.js';
+import AboutPageContent from '../models/AboutPageContent.js';
 
 const router = Router();
 
@@ -16,9 +16,8 @@ const defaultContent = {
 };
 
 router.get('/', async (_req, res) => {
-  const db = getDb();
-  const row = await db.get('SELECT * FROM aboutPageContent ORDER BY updatedAt DESC LIMIT 1');
-  return res.json({ data: row || defaultContent });
+  const content = await AboutPageContent.findOne().sort({ updatedAt: -1 }).lean();
+  return res.json({ data: content || defaultContent });
 });
 
 export default router;

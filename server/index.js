@@ -1,20 +1,20 @@
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import mongoose from 'mongoose';
 import morgan from 'morgan';
 import { env } from './config/env.js';
-import { initDb } from './db.js';
 import { requireAdmin } from './middleware/adminAuth.js';
-import adminAboutRoutes from './routes/adminAbout.js';
 import adminCategoriesRoutes from './routes/adminCategories.js';
-import adminContactRoutes from './routes/adminContact.js';
 import adminPortfolioRoutes from './routes/adminPortfolio.js';
-import adminServicesRoutes from './routes/adminServices.js';
-import publicAboutRoutes from './routes/publicAbout.js';
-import publicContactRoutes from './routes/publicContact.js';
+import adminAboutRoutes from './routes/adminAbout.js';
 import publicPortfolioRoutes from './routes/publicPortfolio.js';
-import publicPrivacyPolicyRoutes from './routes/publicPrivacyPolicy.js';
+import publicAboutRoutes from './routes/publicAbout.js';
 import publicServicesRoutes from './routes/publicServices.js';
+import adminServicesRoutes from './routes/adminServices.js';
+import publicContactRoutes from './routes/publicContact.js';
+import adminContactRoutes from './routes/adminContact.js';
+import publicPrivacyPolicyRoutes from './routes/publicPrivacyPolicy.js';
 import publicTermsOfServiceRoutes from './routes/publicTermsOfService.js';
 
 const app = express();
@@ -41,12 +41,18 @@ app.use('/api/admin/services', requireAdmin, adminServicesRoutes);
 app.use('/api/admin/contact', requireAdmin, adminContactRoutes);
 
 app.use((error, _req, res, _next) => {
-  console.error(error);
+  if (error?.name === 'CastError') {
+    return res.status(400).json({ message: 'Invalid ID format' });
+  }
   return res.status(500).json({ message: 'Internal server error' });
 });
 
 async function start() {
-  await initDb();
+  if (!env.mongoUri) {
+    throw new Error('MONGO_URI is required');
+  }
+
+  await mongoose.connect(env.mongoUri);
   app.listen(env.port, () => {
     console.log(`Nanox API listening on port ${env.port}`);
   });

@@ -1,22 +1,22 @@
 import { Router } from 'express';
-import { getDb } from '../db.js';
+import PortfolioImage from '../models/PortfolioImage.js';
 
 const router = Router();
 
 router.get('/', async (req, res) => {
-  const db = getDb();
-  const category = req.query.category ? String(req.query.category).trim() : null;
-  const rows = category
-    ? await db.all('SELECT * FROM portfolioImages WHERE category = ? ORDER BY createdAt DESC', [category])
-    : await db.all('SELECT * FROM portfolioImages ORDER BY createdAt DESC');
-  return res.json({ data: rows.map((r) => ({ ...r, isFeatured: Boolean(r.isFeatured) })) });
+  const filter = {};
+  if (req.query.category) {
+    filter.category = String(req.query.category).trim();
+  }
+
+  const images = await PortfolioImage.find(filter).sort({ createdAt: -1 }).lean();
+  return res.json({ data: images });
 });
 
 router.get('/:id', async (req, res) => {
-  const db = getDb();
-  const row = await db.get('SELECT * FROM portfolioImages WHERE id = ?', [req.params.id]);
-  if (!row) return res.status(404).json({ message: 'Portfolio image not found' });
-  return res.json({ data: { ...row, isFeatured: Boolean(row.isFeatured) } });
+  const image = await PortfolioImage.findById(req.params.id).lean();
+  if (!image) return res.status(404).json({ message: 'Portfolio image not found' });
+  return res.json({ data: image });
 });
 
 export default router;

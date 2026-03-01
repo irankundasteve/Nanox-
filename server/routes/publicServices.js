@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDb } from '../db.js';
+import Service from '../models/Service.js';
 
 const router = Router();
 
@@ -25,9 +25,8 @@ const defaults = [
 ];
 
 router.get('/', async (_req, res) => {
-  const db = getDb();
-  const rows = await db.all('SELECT * FROM services ORDER BY createdAt DESC');
-  return res.json({ data: rows.length ? rows : defaults });
+  const services = await Service.find().sort({ createdAt: -1 }).lean();
+  return res.json({ data: services.length ? services : defaults });
 });
 
 export default router;

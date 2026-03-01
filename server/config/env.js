@@ -4,7 +4,7 @@ dotenv.config();
 
 export const env = {
   port: Number(process.env.PORT || 4000),
-  sqlitePath: process.env.SQLITE_PATH || './nanox.sqlite',
+  mongoUri: process.env.MONGO_URI || '',
   adminPassword: process.env.ADMIN_PASSWORD || 'change-me',
   jwtSecret: process.env.JWT_SECRET || '',
 };
